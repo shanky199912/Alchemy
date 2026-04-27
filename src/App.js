@@ -17,9 +17,9 @@ export default function DatingAppPrototype() {
     const { appSettings, userStatus, activeTab, setActiveTab } = useUser();
 
     return (
-        <div className={`min-h-screen ${appSettings.darkMode ? 'dark bg-slate-900' : 'bg-slate-200'} flex items-center justify-center py-4 font-sans selection:bg-indigo-100 transition-colors duration-300`}>
+        <div className="min-h-screen bg-slate-200 flex items-center justify-center py-4 font-sans selection:bg-indigo-100 transition-colors duration-300">
             {/* Mobile Device Mockup Wrapper */}
-            <div className={`w-full max-w-[414px] h-[850px] relative overflow-hidden shadow-2xl md:rounded-[40px] md:border-[12px] border-slate-900 flex flex-col transition-colors duration-300 ${appSettings.darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
+            <div className="w-full max-w-[414px] h-[850px] relative overflow-hidden shadow-2xl md:rounded-[40px] md:border-[12px] border-slate-900 flex flex-col transition-colors duration-300 bg-white">
 
                 {userStatus === 'landing' && <LandingPage />}
                 {userStatus === 'onboarding' && <Onboarding />}
@@ -27,7 +27,7 @@ export default function DatingAppPrototype() {
                 {userStatus === 'active' && (
                     <>
                         {/* Dynamic Content Area */}
-                        <div className={`flex-1 overflow-hidden relative transition-colors duration-300 ${appSettings.darkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
+                        <div className="flex-1 overflow-hidden relative transition-colors duration-300 bg-slate-50">
                             <AnimatePresence mode="wait">
                                 {activeTab === 'matches' && <Handpicked key="matches" />}
                                 {activeTab === 'discover' && <Discover key="discover" />}

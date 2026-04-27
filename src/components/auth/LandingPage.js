@@ -7,20 +7,20 @@ const LandingPage = () => {
     const { setUserStatus } = useUser();
 
     return (
-        <div className="h-full flex flex-col bg-slate-950 text-white relative overflow-hidden">
+        <div className="h-full flex flex-col bg-slate-50 text-slate-800 relative overflow-hidden">
             {/* Background elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-            <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-            <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-rose-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+            <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+            <div className="absolute top-[20%] right-[-10%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+            <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 
             <div className="flex-1 flex flex-col justify-center items-center px-8 z-10">
                 <motion.div 
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: "spring", stiffness: 100 }}
-                    className="w-24 h-24 bg-white/10 rounded-3xl backdrop-blur-md flex items-center justify-center mb-8 border border-white/20 shadow-2xl"
+                    className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-8 border border-slate-100 shadow-xl"
                 >
-                    <Sparkles className="w-12 h-12 text-white" />
+                    <Sparkles className="w-12 h-12 text-indigo-500" />
                 </motion.div>
                 
                 <motion.h1 
@@ -63,7 +63,7 @@ const LandingPage = () => {
 
                     <button 
                         onClick={() => setUserStatus('onboarding')}
-                        className="w-full bg-white/10 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-white/20 border border-white/10 transition backdrop-blur-md"
+                        className="w-full bg-slate-100 text-slate-700 font-bold py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-200 border border-slate-200 transition shadow-sm"
                     >
                         <Mail className="w-5 h-5" />
                         Continue with Email
