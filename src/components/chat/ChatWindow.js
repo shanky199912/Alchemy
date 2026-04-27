@@ -1,55 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Phone, Video, Send, Smile, Plus, MoreVertical, Image as ImageIcon, Mic } from 'lucide-react';
-import { useUser } from '../../context/UserContext';
+import { ChevronLeft, Phone, Video, Image as ImageIcon, Smile, Mic, Send, X } from 'lucide-react';
 
-const ChatWindow = ({ chat, setView }) => {
-    const { userProfile } = useUser();
+const EMOJIS = ['😂', '❤️', '😍', '🔥', '😊', '🙌', '🥺', '✨', '🤔', '😎', '💀', '💯'];
+
+const ChatWindow = ({ user, onClose }) => {
     const [messages, setMessages] = useState([
-        { id: 1, text: "Hey! That sounds like a perfect weekend! 😊", sender: 'them', time: '10:24 AM' },
-        { id: 2, text: "I know right? Nothing beats a good coffee and some architecture browsing.", sender: 'me', time: '10:25 AM' },
-        { id: 3, text: chat.msg, sender: 'them', time: '10:26 AM' }
+        { id: 1, text: user.msg || "Hey there!", sender: 'bot' }
     ]);
-    const [input, setInput] = useState('');
+    const [inputText, setInputText] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const [showEmojis, setShowEmojis] = useState(false);
     const scrollRef = useRef(null);
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, isTyping]);
 
-    const getSmartBotReply = (userMsg) => {
-        const msg = userMsg.toLowerCase();
-        if (msg.includes('hello') || msg.includes('hi')) return "Hey Alex! How is your day going? detected some good vibes from your profile today.";
-        if (msg.includes('coffee')) return "I am actually a huge fan of pour-overs. Have you been to that new spot in Soho?";
-        if (msg.includes('date')) return "I'd love to! How about we grab a drink this Thursday? I know a place with great jazz.";
-        return "That's so interesting! Tell me more about that. I love how you think.";
+    const getSmartBotReply = (text, traits) => {
+        const lower = text.toLowerCase();
+        let reply = "That's interesting! Tell me more.";
+
+        // Basic keyword parsing
+        if (/\b(hi|hello|hey|yo)\b/.test(lower)) {
+            reply = "Hey! How's your day going?";
+        } else if (/\b(how are you|how r u|hru)\b/.test(lower)) {
+            reply = "I'm doing great, thanks for asking! Just relaxing. What about you?";
+        } else if (/\b(date|hang out|meet|coffee|drinks)\b/.test(lower)) {
+            reply = "I'd love to! When are you free? ☕";
+        } else if (/\b(name|who are you)\b/.test(lower)) {
+            reply = `I'm ${user.name}! Nice to meet you 😊`;
+        } else if (lower.includes('?')) {
+            const answers = ["I'm not entirely sure, but I'd love to find out!", "Hmm, let me think about that...", "Definitely! What do you think?"];
+            reply = answers[Math.floor(Math.random() * answers.length)];
+        } else if (lower.includes('haha') || lower.includes('lol')) {
+            reply = "Haha right? 😂";
+        }
+
+        // Add personality flavor based on traits
+        const allTraits = traits.join(' ').toLowerCase();
+        if (allTraits.includes('intj') && !lower.includes('?')) {
+            reply += " Rationally speaking, I completely agree.";
+        } else if (allTraits.includes('enfp')) {
+            reply += " ✨ I love that energy!!";
+        } else if (allTraits.includes('avoidant')) {
+            reply = "Yeah, cool. Anyway I'm kinda busy right now.";
+        }
+
+        return reply;
     };
 
     const handleSend = () => {
-        if (!input.trim()) return;
-        
-        const newMessage = {
-            id: Date.now(),
-            text: input,
-            sender: 'me',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        
-        setMessages([...messages, newMessage]);
-        setInput('');
+        if (!inputText.trim()) return;
 
-        // Simulate AI Bot Reply
+        const sentText = inputText;
+        const newMsg = { id: Date.now(), text: sentText, sender: 'me' };
+        setMessages(prev => [...prev, newMsg]);
+        setInputText('');
+        setShowEmojis(false);
+        setIsTyping(true);
+
         setTimeout(() => {
-            const botMsg = {
-                id: Date.now() + 1,
-                text: getSmartBotReply(input),
-                sender: 'them',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, botMsg]);
-        }, 1500);
+            const botReply = getSmartBotReply(sentText, user.chips);
+            setMessages(prev => [...prev, { id: Date.now() + 1, text: botReply, sender: 'bot' }]);
+            setIsTyping(false);
+        }, 1500 + Math.random() * 1000); // 1.5 - 2.5 second typing delay
     };
 
     return (
@@ -58,97 +75,110 @@ const ChatWindow = ({ chat, setView }) => {
             animate={{ x: 0 }} 
             exit={{ x: '100%' }} 
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="absolute inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col h-full transition-colors duration-300"
+            className="absolute inset-0 z-50 bg-slate-50 flex flex-col transition-colors duration-300"
         >
-            {/* Chat Header */}
-            <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 bg-white border-b border-slate-200 shrink-0">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => setView('main')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-slate-600 dark:text-slate-300">
-                        <ChevronLeft className="w-6 h-6" />
+                    <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition">
+                        <ChevronLeft className="w-6 h-6 text-slate-600" />
                     </button>
-                    <div className="relative">
-                        <img src={chat.img} alt={chat.name} className="w-10 h-10 rounded-full object-cover border border-slate-100 dark:border-slate-700" />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-950 rounded-full"></div>
-                    </div>
-                    <div>
-                        <h2 className="font-bold text-slate-800 dark:text-white leading-none">{chat.name}</h2>
-                        <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Online</span>
+                    <div className="flex items-center gap-3">
+                        <img src={user.img} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+                        <div>
+                            <h2 className="font-bold text-slate-800 leading-tight">{user.name}</h2>
+                            <p className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Online</p>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1">
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-slate-400">
-                        <Phone className="w-5 h-5" />
-                    </button>
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-slate-400">
-                        <Video className="w-5 h-5" />
-                    </button>
-                    <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-slate-400">
-                        <MoreVertical className="w-5 h-5" />
-                    </button>
+                <div className="flex gap-4">
+                    <Phone className="w-5 h-5 text-indigo-500 cursor-pointer hover:scale-110 transition" />
+                    <Video className="w-5 h-5 text-indigo-500 cursor-pointer hover:scale-110 transition" />
                 </div>
             </div>
 
             {/* Messages Area */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-slate-50 dark:bg-slate-950/50">
-                <div className="flex justify-center mb-6">
-                    <span className="px-3 py-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-full text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Yesterday</span>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+                <div className="text-center my-4">
+                    <span className="bg-slate-200 text-slate-500 text-xs px-3 py-1 rounded-full font-medium">Today</span>
                 </div>
                 
-                {messages.map((msg) => (
-                    <motion.div 
-                        key={msg.id} 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                    >
-                        <div className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm text-sm font-medium ${
+                {messages.map(msg => (
+                    <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                        {msg.sender === 'bot' && (
+                            <img src={user.img} alt={user.name} className="w-8 h-8 rounded-full mr-2 self-end object-cover shadow-sm" />
+                        )}
+                        <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                             msg.sender === 'me' 
-                                ? 'bg-indigo-500 text-white rounded-tr-none' 
-                                : 'bg-white dark:bg-slate-900 dark:text-slate-200 text-slate-700 rounded-tl-none border border-slate-100 dark:border-slate-800'
+                                ? 'bg-indigo-500 text-white rounded-br-sm shadow-md shadow-indigo-500/20' 
+                                : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'
                         }`}>
-                            <p className="leading-relaxed">{msg.text}</p>
-                            <span className={`text-[9px] block mt-1.5 opacity-70 ${msg.sender === 'me' ? 'text-right' : ''}`}>{msg.time}</span>
+                            <p className="text-[15px]">{msg.text}</p>
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
+                
+                {isTyping && (
+                    <div className="flex justify-start">
+                        <img src={user.img} alt={user.name} className="w-8 h-8 rounded-full mr-2 self-end object-cover opacity-50" />
+                        <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 shadow-sm items-center h-[42px]">
+                            <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                            <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                            <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 rounded-2xl px-2 py-1.5 border border-transparent focus-within:border-indigo-200 dark:focus-within:border-indigo-900 transition">
-                    <button className="p-2 text-slate-400 hover:text-indigo-500 transition">
-                        <Plus className="w-5 h-5" />
+            <div className="p-4 bg-white border-t border-slate-200 shrink-0 relative">
+                
+                {/* Emoji Picker Popover */}
+                <AnimatePresence>
+                    {showEmojis && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute bottom-20 left-4 bg-white border border-slate-200 p-3 rounded-2xl shadow-xl z-10 w-64 grid grid-cols-4 gap-2"
+                        >
+                            <div className="col-span-4 flex justify-between items-center mb-1">
+                                <span className="text-xs font-bold text-slate-400">Emojis</span>
+                                <X className="w-4 h-4 text-slate-400 cursor-pointer hover:text-slate-600" onClick={() => setShowEmojis(false)} />
+                            </div>
+                            {EMOJIS.map(emoji => (
+                                <button 
+                                    key={emoji} 
+                                    onClick={() => setInputText(prev => prev + emoji)}
+                                    className="text-2xl hover:bg-slate-100 rounded-lg p-1 transition flex items-center justify-center"
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <div className="flex items-center gap-3 bg-slate-100 rounded-full px-4 py-2">
+                    <ImageIcon className="w-5 h-5 text-slate-400 cursor-pointer hover:text-slate-600 transition" />
+                    <button onClick={() => setShowEmojis(!showEmojis)}>
+                        <Smile className={`w-5 h-5 transition ${showEmojis ? 'text-indigo-500' : 'text-slate-400 hover:text-slate-600'}`} />
                     </button>
                     <input 
                         type="text" 
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         placeholder="Type a message..." 
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        className="flex-1 bg-transparent outline-none py-2 text-sm dark:text-white text-slate-700 font-medium"
+                        className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-[15px]"
                     />
-                    <button className="p-2 text-slate-400 hover:text-indigo-500 transition">
-                        <Smile className="w-5 h-5" />
-                    </button>
-                    <button 
-                        onClick={handleSend}
-                        disabled={!input.trim()}
-                        className={`p-2.5 rounded-xl transition ${input.trim() ? 'bg-indigo-500 text-white shadow-md' : 'text-slate-300 cursor-not-allowed'}`}
-                    >
-                        <Send className="w-5 h-5" />
-                    </button>
-                </div>
-                <div className="flex justify-around mt-3 px-2">
-                    <button className="flex flex-col items-center gap-1">
-                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-400">
-                            <ImageIcon className="w-5 h-5" />
-                        </div>
-                    </button>
-                    <button className="flex flex-col items-center gap-1">
-                        <div className="w-10 h-10 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center text-slate-400">
-                            <Mic className="w-5 h-5" />
-                        </div>
-                    </button>
+                    {inputText.trim() ? (
+                        <button onClick={handleSend} className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center -mr-1 shadow-md hover:bg-indigo-600 transition hover:scale-105">
+                            <Send className="w-4 h-4 text-white ml-0.5" />
+                        </button>
+                    ) : (
+                        <Mic className="w-5 h-5 text-slate-400 cursor-pointer hover:text-slate-600 transition" />
+                    )}
                 </div>
             </div>
         </motion.div>

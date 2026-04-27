@@ -9,14 +9,14 @@ const LikedYou = () => {
     const likedUsers = discoverQueue.slice(-10);
 
     return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full p-4 overflow-y-auto no-scrollbar bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full p-4 overflow-y-auto no-scrollbar bg-slate-50 transition-colors duration-300">
         <div className="mb-6 mt-2">
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">Likes You</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Upgrade to see everyone who liked you</p>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Likes You</h1>
+            <p className="text-sm text-slate-500 mt-1">Upgrade to see everyone who liked you</p>
         </div>
         <div className="grid grid-cols-2 gap-4 pb-6">
             {likedUsers.map((user, idx) => (
-                <div key={user.id} className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-200 dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-800 cursor-pointer">
+                <div key={user.id} className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-slate-200 shadow-sm border border-slate-100 cursor-pointer">
                     <img
                         src={user.img}
                         alt="blurred profile"
