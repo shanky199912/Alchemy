@@ -189,13 +189,6 @@ const Settings = ({ setView }) => {
                                 </div>
                                 <Toggle active={appSettings.readReceipts} onClick={() => updateAppSetting('readReceipts', !appSettings.readReceipts)} />
                             </div>
-                            <div className="p-4 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Moon className="w-5 h-5 text-slate-400" />
-                                    <span className="font-semibold text-slate-700 dark:text-slate-200">Dark Mode</span>
-                                </div>
-                                <Toggle active={appSettings.darkMode} onClick={() => updateAppSetting('darkMode', !appSettings.darkMode)} />
-                            </div>
                             <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                                 <div className="flex items-center gap-3">
                                     <Ruler className="w-5 h-5 text-slate-400" />
