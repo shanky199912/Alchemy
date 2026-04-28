@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, Compass, Heart, MessageCircle, User } from 'lucide-react';
 
-const BottomNav = ({ activeTab, setActiveTab }) => {
+const BottomNav = ({ activeTab, setActiveTab, setActiveChat }) => {
     const navItems = [
         { id: 'matches', icon: Sparkles, label: 'Matches' },
         { id: 'discover', icon: Compass, label: 'Discover' },
@@ -20,7 +20,10 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
                 return (
                     <button 
                         key={item.id}
-                        onClick={() => setActiveTab(item.id)}
+                        onClick={() => {
+                            setActiveTab(item.id);
+                            if (item.id === 'chat' && setActiveChat) setActiveChat(null);
+                        }}
                         className={`flex flex-col items-center gap-1 transition-all ${
                             isActive 
                                 ? 'text-indigo-600 scale-110' 

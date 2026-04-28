@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Camera, Settings as SettingsIcon, CheckCircle2, ChevronLeft, Shield, EyeOff, Star, 
     Zap, Plus, Mic, Briefcase, GraduationCap, MapPin, Ruler, MessageSquare,
-    FlaskConical, Play, Heart, Search, Home, Baby, Wine, Coffee, Dumbbell, Moon, Globe, X
+    FlaskConical, Play, Heart, Search, Home, Baby, Wine, Coffee, Dumbbell, Moon, Globe, X, Check
 } from 'lucide-react';
-import SwipeCard from './SwipeCard';
+import SwipeCard from './discover/SwipeCard';
 import Settings from './Settings';
 import Safety from './Safety';
 import { useUser } from '../context/UserContext';
@@ -140,9 +140,102 @@ const BasicsModal = ({ item, onClose, updateBasicInfo }) => {
     );
 };
 
+const ALL_INTERESTS = [
+    { label: 'Music', emoji: '🎵' },
+    { label: 'Cooking', emoji: '🍳' },
+    { label: 'Yoga', emoji: '🧘' },
+    { label: 'Tech', emoji: '💻' },
+    { label: 'Travel', emoji: '✈️' },
+    { label: 'Photography', emoji: '📷' },
+    { label: 'Gaming', emoji: '🎮' },
+    { label: 'Hiking', emoji: '🥾' },
+    { label: 'Coffee', emoji: '☕' },
+    { label: 'Reading', emoji: '📚' },
+    { label: 'Art', emoji: '🎨' },
+    { label: 'Fitness', emoji: '💪' },
+    { label: 'Movies', emoji: '🎬' },
+    { label: 'Dogs', emoji: '🐶' },
+    { label: 'Foodie', emoji: '🍜' },
+    { label: 'Dancing', emoji: '💃' },
+    { label: 'Meditation', emoji: '🌿' },
+    { label: 'Surfing', emoji: '🏄' },
+];
+
+const InterestsModal = ({ currentInterests, onClose, onSave }) => {
+    const [selected, setSelected] = useState([...currentInterests]);
+
+    const toggle = (label) => {
+        setSelected(prev =>
+            prev.includes(label) ? prev.filter(i => i !== label) : [...prev, label]
+        );
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="absolute inset-x-0 bottom-0 z-[200] bg-white rounded-t-3xl shadow-2xl flex flex-col"
+            style={{ maxHeight: '80%' }}
+        >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 bg-slate-200 rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 shrink-0">
+                <div>
+                    <h3 className="font-extrabold text-lg text-slate-800">Edit Interests</h3>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">{selected.length} selected</p>
+                </div>
+                <button onClick={onClose} className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+
+            {/* Tag grid */}
+            <div className="flex-1 overflow-y-auto p-5">
+                <div className="flex flex-wrap gap-2.5">
+                    {ALL_INTERESTS.map(({ label, emoji }) => {
+                        const isSelected = selected.includes(label);
+                        return (
+                            <motion.button
+                                key={label}
+                                whileTap={{ scale: 0.92 }}
+                                onClick={() => toggle(label)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-sm border-2 transition-all ${
+                                    isSelected
+                                        ? 'bg-indigo-500 border-indigo-500 text-white shadow-md shadow-indigo-100'
+                                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-indigo-200'
+                                }`}
+                            >
+                                <span>{emoji}</span>
+                                <span>{label}</span>
+                                {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                            </motion.button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Save button */}
+            <div className="p-5 pt-3 shrink-0 border-t border-slate-100">
+                <button
+                    onClick={() => { onSave(selected); onClose(); }}
+                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
+                >
+                    <Check className="w-4 h-4" strokeWidth={3} /> Save Interests
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
 const EditProfileHub = ({ setView }) => {
     const { userProfile, updateProfile, updateBasicInfo } = useUser();
     const [editingBasic, setEditingBasic] = useState(null);
+    const [showInterestsModal, setShowInterestsModal] = useState(false);
 
     const BASIC_CONFIG = [
         { icon: Briefcase, label: 'Work', value: userProfile.basics['Work'] },
@@ -165,6 +258,13 @@ const EditProfileHub = ({ setView }) => {
         <div className="absolute inset-0 z-[100]">
             <AnimatePresence>
                 {editingBasic && <BasicsModal item={editingBasic} onClose={() => setEditingBasic(null)} updateBasicInfo={updateBasicInfo} />}
+                {showInterestsModal && (
+                    <InterestsModal
+                        currentInterests={userProfile.interests}
+                        onClose={() => setShowInterestsModal(false)}
+                        onSave={(newInterests) => updateProfile('interests', newInterests)}
+                    />
+                )}
             </AnimatePresence>
             
             <motion.div 
@@ -245,19 +345,37 @@ const EditProfileHub = ({ setView }) => {
                     <section>
                         <div className="flex justify-between items-center mb-3 px-2">
                             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Interests</h2>
+                            <button
+                                onClick={() => setShowInterestsModal(true)}
+                                className="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full hover:bg-indigo-100 transition"
+                            >
+                                Edit
+                            </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {userProfile.interests.map((tag, idx) => (
-                                <div key={idx} className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-4 py-2 rounded-full text-sm font-bold shadow-sm">
-                                    {tag}
-                                </div>
-                            ))}
-                            <div className="bg-slate-100 text-slate-500 border border-slate-200 px-4 py-2 rounded-full text-sm font-bold cursor-pointer flex items-center gap-1">
+                            {userProfile.interests.map((tag, idx) => {
+                                const match = ALL_INTERESTS.find(i => i.label === tag);
+                                return (
+                                    <div
+                                        key={idx}
+                                        onClick={() => setShowInterestsModal(true)}
+                                        className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 px-3.5 py-2 rounded-full text-sm font-bold shadow-sm cursor-pointer hover:bg-indigo-100 transition"
+                                    >
+                                        {match && <span>{match.emoji}</span>}
+                                        {tag}
+                                    </div>
+                                );
+                            })}
+                            <div
+                                onClick={() => setShowInterestsModal(true)}
+                                className="flex items-center gap-1 bg-slate-100 text-slate-500 border border-slate-200 px-3.5 py-2 rounded-full text-sm font-bold cursor-pointer hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition"
+                            >
                                 <Plus className="w-4 h-4" /> Add
                             </div>
                         </div>
                     </section>
 
+                    {/* The Basics */}
                     {/* The Basics */}
                     <section>
                         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">The Basics</h2>
@@ -304,124 +422,6 @@ const EditProfileHub = ({ setView }) => {
             </div>
         </motion.div>
         </div>
-    );
-};
-
-const PromptSelector = ({ setView }) => {
-    const CATEGORIES = [
-        { id: 1, title: 'All About Me', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-        { id: 2, title: 'Our Story', color: 'bg-rose-50 text-rose-700 border-rose-200' },
-        { id: 3, title: 'Self-Care', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    ];
-
-    const PROMPTS = [
-        "A random fact I love is...",
-        "The way to win me over is...",
-        "We'll get along if...",
-        "I'm weirdly obsessed with...",
-        "The most spontaneous thing I've done is...",
-        "My simple pleasures...",
-        "A boundary of mine is..."
-    ];
-
-    return (
-        <motion.div 
-            key="prompts"
-            initial={{ opacity: 0, y: 50 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: 50 }} 
-            className="absolute inset-0 z-[100] bg-white flex flex-col h-full"
-        >
-            <div className="px-4 py-4 flex items-center justify-between border-b border-slate-100 shrink-0">
-                <button onClick={() => setView('edit')} className="w-10 h-10 bg-slate-50 rounded-full shadow-sm flex items-center justify-center border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
-                    <ChevronLeft className="w-6 h-6 pr-0.5" />
-                </button>
-                <h1 className="font-bold text-slate-800 text-lg">Select a Prompt</h1>
-                <div className="w-10"></div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-8">
-                {/* Categories */}
-                <section>
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                        {CATEGORIES.map(cat => (
-                            <div key={cat.id} className={`px-4 py-2 rounded-full text-sm font-bold shadow-sm border whitespace-nowrap cursor-pointer ${cat.color}`}>
-                                {cat.title}
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Prompt List */}
-                <section className="space-y-4">
-                    {PROMPTS.map((prompt, idx) => (
-                        <div 
-                            key={idx} 
-                            onClick={() => setView('edit')}
-                            className="p-5 rounded-3xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition cursor-pointer bg-slate-50 group flex items-start gap-4"
-                        >
-                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm border border-slate-100 group-hover:bg-indigo-50 transition">
-                                <MessageSquare className="w-5 h-5 text-indigo-400" />
-                            </div>
-                            <span className="font-bold text-slate-700 text-lg leading-snug pt-1 group-hover:text-indigo-600 transition">{prompt}</span>
-                        </div>
-                    ))}
-                </section>
-            </div>
-        </motion.div>
-    );
-};
-
-const Profile = () => {
-    const [currentView, setCurrentView] = useState('main'); // 'main' | 'edit' | 'prompts'
-
-    return (
-        <div className="relative h-full w-full bg-slate-50 overflow-hidden">
-            <AnimatePresence mode="wait">
-                {currentView === 'main' && <MainProfileView key="main" setView={setCurrentView} />}
-                {currentView === 'edit' && <EditProfileHub key="edit" setView={setCurrentView} />}
-                {currentView === 'prompts' && <PromptSelector key="prompts" setView={setCurrentView} />}
-                {currentView === 'preview' && <PreviewProfile key="preview" setView={setCurrentView} />}
-                {currentView === 'settings' && <Settings key="settings" setView={setCurrentView} />}
-                {currentView === 'safety' && <Safety key="safety" setView={setCurrentView} />}
-            </AnimatePresence>
-        </div>
-    );
-};
-
-const PreviewProfile = ({ setView }) => {
-    const previewCard = {
-        id: 'preview',
-        name: "Alex",
-        age: 28,
-        distance: "New York",
-        img: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=400&q=80",
-        chips: ['Architecture', 'Espresso', 'Indie Rock'],
-        voice_prompt: "My favorite song to sing in the shower",
-        secondary_img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80",
-        text_prompt_topic: "I'm weirdly obsessed with...",
-        bio: "Mid-century modern lamps. I have 12.",
-    };
-
-    return (
-        <motion.div 
-            key="preview"
-            initial={{ opacity: 0, y: 100 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            exit={{ opacity: 0, y: 100 }} 
-            className="absolute inset-0 z-[200] bg-slate-50 flex flex-col"
-        >
-            <div className="px-4 py-6 flex justify-between items-center z-10">
-                <button onClick={() => setView('main')} className="w-10 h-10 bg-white/40 rounded-full flex items-center justify-center text-slate-800 hover:bg-white/60 backdrop-blur-md transition border border-white/40">
-                    <ChevronLeft className="w-6 h-6 pr-0.5" />
-                </button>
-                <h1 className="text-slate-800 font-bold text-lg drop-shadow-sm">Profile Preview</h1>
-                <div className="w-10"></div>
-            </div>
-            <div className="flex-1 relative flex items-center justify-center pb-8 pt-4">
-                <SwipeCard card={previewCard} isTop={true} onSwipe={() => setView('main')} />
-            </div>
-        </motion.div>
     );
 };
 

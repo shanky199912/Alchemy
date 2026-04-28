@@ -14,7 +14,7 @@ import Onboarding from './components/auth/Onboarding';
 import { useUser } from './context/UserContext';
 
 export default function DatingAppPrototype() {
-    const { appSettings, userStatus, activeTab, setActiveTab } = useUser();
+    const { appSettings, userStatus, activeTab, setActiveTab, setActiveChat } = useUser();
 
     return (
         <div className="min-h-screen bg-slate-200 flex items-center justify-center py-4 font-sans selection:bg-indigo-100 transition-colors duration-300">
@@ -39,7 +39,7 @@ export default function DatingAppPrototype() {
                         </div>
 
                         {/* Bottom Navigation */}
-                        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+                        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} setActiveChat={setActiveChat} />
                     </>
                 )}
             </div>

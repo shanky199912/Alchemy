@@ -15,11 +15,14 @@ export const UserProvider = ({ children }) => {
         pushNotifications: true,
         units: 'Mi. / Lbs.',
         location: 'New York',
+        incognitoMode: false,
     });
 
     const [userProfile, setUserProfile] = useState({
         name: 'Alex',
         age: 28,
+        isVerified: false,
+        pronouns: 'He/Him',
         bio: 'Product designer living in NYC. I spend my weekends exploring coffee shops and writing bad code.',
         basics: {
             'Work': 'Product Designer at TechCorp',
@@ -28,6 +31,7 @@ export const UserProvider = ({ children }) => {
             'Hometown': 'Chicago, IL',
             'Height': "5'10\"",
             'Interested in': 'Everyone',
+            'Pronouns': 'He/Him',
             'Looking for': 'Long-term relationship',
             'Relationship Type': 'Monogamy',
             'Family Plans': 'Want children',
@@ -53,7 +57,7 @@ export const UserProvider = ({ children }) => {
     const [userStatus, setUserStatus] = useState('landing'); // 'landing', 'onboarding', 'active'
     const [activeTab, setActiveTab] = useState('discover');
     const [activeChat, setActiveChat] = useState(null);
-    
+
     // Discover and Match Engine State
     const [discoverQueue, setDiscoverQueue] = useState([]);
     const [matchedUsers, setMatchedUsers] = useState([]);
