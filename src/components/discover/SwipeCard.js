@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { FlaskConical, Play, BadgeCheck, Video, Mic } from 'lucide-react';
+import { FlaskConical, Play, BadgeCheck, Video, Mic, Sparkles } from 'lucide-react';
 import { isActiveRecently } from '../../utils/FilteringLogic';
+import { calculateResonance } from '../../utils/resonanceEngine';
+import { useUser } from '../../context/UserContext';
 
 const SwipeCard = ({ card, isTop, onSwipe }) => {
     const x       = useMotionValue(0);
@@ -14,6 +16,37 @@ const SwipeCard = ({ card, isTop, onSwipe }) => {
 
     const waveHeights = [30, 60, 40, 80, 100, 50, 70, 90, 40, 60, 30, 80, 50, 90, 40, 60, 80, 100, 50, 30];
     const active      = isActiveRecently(card);
+    const { userProfile } = useUser();
+
+    // Performance-optimized compatibility calculation
+    const resonanceScore = useMemo(() => {
+        return calculateResonance(userProfile, card);
+    }, [userProfile, card]);
+
+    // Tier-based styles and labels
+    const tierStyles = useMemo(() => {
+        if (resonanceScore >= 90) return {
+            label: 'Soulmate',
+            emoji: '✨',
+            border: 'border-amber-400/80',
+            text: 'text-amber-400',
+            bg: 'bg-amber-400/10'
+        };
+        if (resonanceScore >= 80) return {
+            label: 'High Vibe',
+            emoji: '⚡',
+            border: 'border-indigo-500/80',
+            text: 'text-indigo-400',
+            bg: 'bg-indigo-500/10'
+        };
+        return {
+            label: 'Match',
+            emoji: '🤝',
+            border: 'border-white/40',
+            text: 'text-white',
+            bg: 'bg-white/10'
+        };
+    }, [resonanceScore]);
 
     return (
         <motion.div
@@ -43,13 +76,29 @@ const SwipeCard = ({ card, isTop, onSwipe }) => {
                     <img src={card.img} alt={card.name} className="w-full h-full object-cover pointer-events-none rounded-b-[24px]" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/0 to-black/20 pointer-events-none rounded-b-[24px]" />
 
-                    {/* Active dot */}
-                    {active && (
-                        <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full">
-                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                            <span className="text-white text-xs font-bold">Active</span>
-                        </div>
-                    )}
+                    {/* Active dot & Resonance Badge */}
+                    <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                        {active && (
+                            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
+                                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                                <span className="text-white text-[10px] font-black uppercase tracking-wider">Active Now</span>
+                            </div>
+                        )}
+                        
+                        {/* Alchemy Resonance Badge */}
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-xl border-2 shadow-lg ${tierStyles.border} ${tierStyles.bg}`}
+                        >
+                            <Sparkles className={`w-3.5 h-3.5 ${tierStyles.text} fill-current`} />
+                            <div className="flex flex-col leading-none">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${tierStyles.text}`}>
+                                    {resonanceScore}% {tierStyles.label}
+                                </span>
+                            </div>
+                        </motion.div>
+                    </div>
 
                     <div className="absolute bottom-6 left-5 right-5 text-white pointer-events-none">
                         <h2 className="text-[38px] font-bold flex items-center gap-3 tracking-tight drop-shadow-md leading-none mb-1">

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { generateMockUsers } from '../utils/mockData';
+import { ENRICHED_USERS } from '../constants/enrichedUsers';
+
 
 const UserContext = createContext();
 
@@ -60,12 +62,13 @@ export const UserProvider = ({ children }) => {
 
     // Discover and Match Engine State
     const [discoverQueue, setDiscoverQueue] = useState([]);
-    const [matchedUsers, setMatchedUsers] = useState([]);
+    const [activeMatches, setActiveMatches] = useState([]);
 
-    // Initialize mock users on mount
+    // Initialize enriched users on mount
     useEffect(() => {
-        setDiscoverQueue(generateMockUsers(100));
+        setDiscoverQueue(ENRICHED_USERS);
     }, []);
+
 
     const updateAppSetting = (key, value) => {
         setAppSettings(prev => ({ ...prev, [key]: value }));
@@ -86,6 +89,61 @@ export const UserProvider = ({ children }) => {
         setSafetySettings(prev => ({ ...prev, [key]: value }));
     };
 
+    // Translator Engine: Map raw scores to labels
+    useEffect(() => {
+        if (!userProfile.psychometricData || Object.keys(userProfile.psychometricData).length === 0) return;
+
+        const data = userProfile.psychometricData;
+        const sums = {
+            extroversion: 0, introversion: 0, secure: 0, anxious: 0, avoidant: 0,
+            eq: 0, hustler: 0, creative: 0, socialite: 0, homebody: 0
+        };
+
+        Object.values(data).forEach(mapping => {
+            Object.entries(mapping).forEach(([trait, value]) => {
+                if (sums.hasOwnProperty(trait)) {
+                    sums[trait] += value;
+                }
+            });
+        });
+
+        // Determine Attachment
+        let attachment = "Secure";
+        if (sums.anxious > sums.secure && sums.anxious > sums.avoidant) attachment = "Anxious";
+        else if (sums.avoidant > sums.secure && sums.anxious > sums.avoidant) attachment = "Avoidant";
+
+        // Determine Archetype
+        const archetypes = ["Hustler", "Creative", "Socialite", "Homebody"];
+        const archetypeScores = [sums.hustler, sums.creative, sums.socialite, sums.homebody];
+        const maxArchetypeIdx = archetypeScores.indexOf(Math.max(...archetypeScores));
+        const archetype = archetypes[maxArchetypeIdx];
+
+        // Determine MBTI (Approximate based on E/I and Archetype flavor)
+        const e_vs_i = sums.extroversion >= sums.introversion ? "E" : "I";
+        const archetypeToMBTI = {
+            Hustler: "NTJ",
+            Creative: "NFP",
+            Socialite: "SFJ",
+            Homebody: "STJ"
+        };
+        const mbti = e_vs_i + archetypeToMBTI[archetype];
+
+        // EQ Score (Normalized to 100)
+        // Max possible EQ is roughly 10-12 based on the 5 MCQ questions
+        const eqScore = Math.min(100, Math.max(0, (sums.eq / 10) * 100));
+
+        updateProfile('psychometricResults', {
+            mbti,
+            attachment,
+            archetype,
+            eqScore: Math.round(eqScore)
+        });
+        
+        // Update chips for UI consistency
+        updateProfile('chips', [mbti, attachment, archetype]);
+    }, [userProfile.psychometricData]);
+
+
     return (
         <UserContext.Provider value={{
             appSettings, updateAppSetting,
@@ -95,7 +153,7 @@ export const UserProvider = ({ children }) => {
             activeTab, setActiveTab,
             activeChat, setActiveChat,
             discoverQueue, setDiscoverQueue,
-            matchedUsers, setMatchedUsers
+            activeMatches, setActiveMatches
         }}>
             {children}
         </UserContext.Provider>
